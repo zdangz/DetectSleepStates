@@ -1,227 +1,128 @@
 # DetectSleepStates
 
-A machine learning project for detecting sleep onset and wakeup events from accelerometer data, developed for the [Child Mind Institute - Detect Sleep States competition on Kaggle](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states).
+A machine learning project for detecting sleep states using accelerometer data.
 
-## 📋 Table of Contents
+## Project Structure
 
-- [Overview](#overview)
-- [Problem Description](#problem-description)
-- [Dataset](#dataset)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Model Approach](#model-approach)
-- [Project Structure](#project-structure)
-- [Results](#results)
-- [Development Notes](#development-notes)
-- [References](#references)
-- [Contributing](#contributing)
-- [License](#license)
-
-## 🎯 Overview
-
-This project uses machine learning techniques to automatically detect sleep onset and wakeup events from wrist-worn accelerometer data. The goal is to improve sleep analysis for children and adolescents, particularly those with mood and behavior difficulties, by providing accurate automated sleep event detection.
-
-## 📖 Problem Description
-
-The project aims to detect two types of sleep events from continuous accelerometer data:
-- **Sleep Onset**: The moment when a person transitions from wakefulness to sleep
-- **Wakeup**: The moment when a person transitions from sleep to wakefulness
-
-Traditional sleep studies require manual annotation by experts, which is time-consuming and expensive. This automated approach can make sleep analysis more accessible and scalable.
-
-## 📊 Dataset
-
-The dataset consists of accelerometer data collected from wrist-worn devices:
-
-### Training Data
-
-- **train_series.parquet**: Time-series accelerometer data
-  - `series_id`: Unique identifier for each participant
-  - `step`: Time step (5-second intervals)
-  - `timestamp`: ISO 8601 formatted timestamp
-  - `anglez`: Z-angle of the accelerometer (measures arm angle relative to vertical)
-  - `enmo`: Euclidean Norm Minus One (measure of movement intensity)
-
-- **train_events.csv**: Labeled sleep events
-  - `series_id`: Participant identifier
-  - `night`: Night number for the participant
-  - `event`: Type of event (`onset` or `wakeup`)
-  - `step`: Time step where the event occurred
-  - `timestamp`: Event timestamp
-
-### Data Characteristics
-
-- Over 127 million rows of accelerometer readings
-- Data collected at 5-second intervals
-- Contains both labeled events and unlabeled time periods
-- Some missing values in the events dataset for incomplete recordings
-
-## 🚀 Installation
-
-### Prerequisites
-
-- Python 3.7 or higher
-- Jupyter Notebook or JupyterLab
-
-### Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/zdangz/DetectSleepStates.git
-cd DetectSleepStates
-```
-
-2. Install required packages:
-```bash
-pip install pandas numpy scikit-learn jupyter pyarrow
-```
-
-3. Download the competition data from Kaggle:
-   - Visit the [competition data page](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/data)
-   - Download `train_series.parquet` and `train_events.csv`
-   - Place them in your working directory or update the file paths in the notebooks
-
-## 💻 Usage
-
-### Running the Notebooks
-
-1. **Main Analysis Notebook** (`ML - Sleep State Detection.ipynb`):
-   - Open in Jupyter: `jupyter notebook "ML - Sleep State Detection.ipynb"`
-   - Update file paths in the first cell to point to your data location
-   - Run cells sequentially to:
-     - Load and explore the data
-     - Clean and preprocess the datasets
-     - Perform feature engineering
-     - Train the Random Forest model
-     - Make predictions on test data
-
-2. **Kaggle Submission Notebook** (`randomforestclassifier.ipynb`):
-   - Designed to run on Kaggle's platform
-   - Uses Kaggle's input paths (`/kaggle/input/...`)
-   - Generates submission file in the required format
-
-### Key Steps
-
-1. **Data Import**: Load the parquet and CSV files
-2. **Data Cleansing**: Handle missing values and data quality issues
-3. **Data Merging**: Combine series and events data on matching keys
-4. **Feature Engineering**: 
-   - Extract time-based features (hour, day of week)
-   - Calculate rolling averages for anglez and enmo
-5. **Model Training**: Train Random Forest classifier
-6. **Prediction**: Generate predictions for test data
-
-## 🤖 Model Approach
-
-### Features
-
-The model uses the following engineered features:
-
-1. **Time Features**:
-   - Hour of the day
-   - Day of the week
-   
-2. **Accelerometer Features**:
-   - Rolling average of Z-angle (window size: 10 steps = 50 seconds)
-   - Rolling average of ENMO (Euclidean Norm Minus One)
-
-### Model Architecture
-
-- **Algorithm**: Random Forest Classifier
-- **Parameters**:
-  - `n_estimators`: 100 trees
-  - `random_state`: 42 (for reproducibility)
-- **Target**: Binary classification (onset: 0, wakeup: 1)
-
-### Training Process
-
-1. Merge time-series data with labeled events
-2. Engineer time-based and rolling window features
-3. Split data into training (80%) and validation (20%) sets
-4. Train Random Forest model on training set
-5. Evaluate on validation set
-6. Generate predictions for test data
-
-## 📁 Project Structure
+The project has been refactored into a modular structure for better code organization and reusability:
 
 ```
 DetectSleepStates/
-├── ML - Sleep State Detection.ipynb    # Main analysis and model development
-├── randomforestclassifier.ipynb        # Kaggle submission notebook
-├── submission.csv                       # Sample submission file
-├── README.md                            # This file
-├── DEVELOPER_GUIDE.md                   # Detailed developer documentation
-└── CONTRIBUTING.md                      # Contribution guidelines
+├── src/                          # Source code modules
+│   ├── __init__.py               # Package initialization
+│   ├── config.py                 # Configuration and constants
+│   ├── data_loader.py            # Data loading and preprocessing
+│   ├── feature_engineering.py   # Feature extraction and engineering
+│   ├── model.py                  # Model training and prediction
+│   └── utils.py                  # Utility functions
+├── ML - Sleep State Detection - Refactored.ipynb  # Refactored notebook
+├── ML - Sleep State Detection.ipynb               # Original notebook
+├── randomforestclassifier.ipynb                   # Original RF notebook
+└── README.md                     # This file
 ```
 
-## 📈 Results
+## Modules Overview
 
-The model achieves reasonable validation accuracy for sleep event detection. The submission file contains predictions with confidence scores for each time step and event type combination.
+### `src/config.py`
+Contains all configuration parameters and constants:
+- Model hyperparameters (n_estimators, random_state)
+- Feature engineering parameters (window_size)
+- Event label mappings
+- Default data paths
 
-### Output Format
+### `src/data_loader.py`
+Handles data loading and preprocessing:
+- `load_train_data()`: Load training series and events
+- `load_test_data()`: Load test series
+- `merge_series_and_events()`: Merge datasets
+- `get_data_summary()`: Get dataset statistics
 
-The submission CSV contains:
-- `row_id`: Unique identifier for each prediction
-- `series_id`: Participant identifier
-- `step`: Time step
-- `event`: Predicted event type (`onset` or `wakeup`)
-- `score`: Confidence score (0-1)
+### `src/feature_engineering.py`
+Feature extraction and engineering:
+- `extract_time_features()`: Extract hour, time from timestamps
+- `add_rolling_window_features()`: Calculate rolling averages
+- `encode_event_labels()`: Convert event strings to numeric labels
+- `prepare_features()`: Complete feature engineering pipeline
 
-## 🔧 Development Notes
+### `src/model.py`
+Model training and prediction:
+- `create_model()`: Initialize Random Forest classifier
+- `train_and_evaluate_pipeline()`: Complete training pipeline
+- `predict_with_confidence()`: Make predictions with confidence scores
+- `evaluate_model()`: Evaluate model performance
 
-### Version History
+### `src/utils.py`
+Utility functions:
+- `clear_memory()`: Memory management
+- `add_predictions_to_dataframe()`: Add predictions to results
+- `export_submission()`: Export predictions to CSV
+- `get_memory_usage()`: Monitor DataFrame memory usage
 
-**28 October 2023**:
-- Fixed "Notebook out of memory" issue during submission by:
-  - Deleting unused dataframes
-  - Importing and using the `gc` (garbage collection) module
-- Debugging "Submission scoring error"
+## Usage
 
-### Known Issues
+### Using the Refactored Modules
 
-- Large dataset requires significant memory (127M+ rows)
-- Some participants have missing event labels
-- Model performance may vary by participant due to individual differences
+```python
+import sys
+sys.path.insert(0, '.')
 
-### Memory Optimization Tips
+from src import data_loader, feature_engineering, model
+from src.config import EVENT_LABEL_MAP
 
-1. Delete unused dataframes immediately after use
-2. Use garbage collection (`gc.collect()`) regularly
-3. Process data in chunks when possible
-4. Use appropriate dtypes to reduce memory footprint
+# Load data
+train_series, train_events = data_loader.load_train_data(
+    "path/to/train_series.parquet",
+    "path/to/train_events.csv"
+)
 
-## 📚 References
+# Merge and engineer features
+merged_data = data_loader.merge_series_and_events(train_series, train_events)
+merged_data = feature_engineering.prepare_features(merged_data, is_training=True)
 
-### Helpful Resources
+# Train and evaluate
+trained_model, results = model.train_and_evaluate_pipeline(merged_data)
 
-- **Exploratory Data Analysis**:
-  - [Accelerometer Data Analysis by dumisanisibanda](https://www.kaggle.com/code/dumisanisibanda/exploratory-accelerometer-data-analysis)
-  - [Sleep EDA Plots by yihsuankao](https://www.kaggle.com/code/yihsuankao/sleep-eda-plots)
+# Make predictions on test data
+test_series = data_loader.load_test_data("path/to/test_series.parquet")
+test_series = feature_engineering.prepare_features(test_series, is_training=False)
+predictions, confidence = model.predict_with_confidence(trained_model, test_series)
+```
 
-- **Model Baselines**:
-  - [Random Forest Model Starter by sumitai](https://www.kaggle.com/code/sumitai/zzzs-random-forest-model-starter)
+### Using the Refactored Notebook
 
-### Competition Information
+Open `ML - Sleep State Detection - Refactored.ipynb` for a complete example that uses all the refactored modules.
 
-- [Child Mind Institute - Detect Sleep States Competition](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states)
-- [Competition Discussion Forum](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/discussion)
+## Benefits of the Refactored Structure
 
-## 🤝 Contributing
+1. **Modularity**: Code is organized into logical, reusable modules
+2. **Maintainability**: Easier to update and fix issues in specific components
+3. **Readability**: Clear separation of concerns with descriptive function names
+4. **Documentation**: Comprehensive docstrings for all functions
+5. **Configurability**: Centralized configuration for easy parameter tuning
+6. **Error Handling**: Proper error handling and validation
+7. **Type Safety**: Type hints for better code clarity
+8. **Testability**: Modular functions are easier to unit test
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+## References
 
-For detailed development information, see [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md).
+Exploratory Data Analysis:
+- https://www.kaggle.com/code/dumisanisibanda/exploratory-accelerometer-data-analysis
 
-## 📄 License
+EDA Plots:
+- https://www.kaggle.com/code/yihsuankao/sleep-eda-plots
 
-This project is part of a Kaggle competition. Please refer to the [competition rules](https://www.kaggle.com/competitions/child-mind-institute-detect-sleep-states/rules) for data usage and submission guidelines.
+Random Forest Starter:
+- https://www.kaggle.com/code/sumitai/zzzs-random-forest-model-starter
 
-## 👥 Authors
+## Changelog
 
-- [@zdangz](https://github.com/zdangz)
+### Current Version
+- Refactored code into modular structure with src/ package
+- Added comprehensive documentation and type hints
+- Centralized configuration management
+- Improved error handling and validation
+- Created refactored example notebook
 
-## 🙏 Acknowledgments
-
-- Child Mind Institute for organizing the competition
-- Kaggle community for shared notebooks and insights
-- All contributors who provided exploratory analysis and baseline models
+### 28 October 2023
+- Fixed "Notebook out of memory" issue during submission by deleting unused dataframes and importing gc
+- To debug "Submission scoring error"
